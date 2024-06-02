@@ -31,6 +31,11 @@ export const signerAddress = 'dora12zkrfca99mgavvj4mraxnra3mdarpggljzp8k8';
 export const contractAddress =
 	'dora1657pee2jhf4jk8pq6yq64e758ngvum45gl866knmjkd83w6jgn3snsd0l3';
 
+export const defaultCoordPubKey = [
+	7421895562686352826563669933550830041677218724210020561066263498415701325176n,
+	15885728170420100812951141355295788125825926252169931895803773048587171524289n,
+] as [bigint, bigint];
+
 /** Setting to speed up testing */
 const defaultSigningClientOptions: SigningStargateClientOptions = {
 	broadcastPollIntervalMs: 8_000,
@@ -121,7 +126,7 @@ export const stringizing = (
 	const newPath = [...path, o];
 
 	if (Array.isArray(o)) {
-		return o.map(item => stringizing(item, newPath));
+		return o.map((item) => stringizing(item, newPath));
 	} else if (typeof o === 'object') {
 		const output: { [key: string]: MixedData<string> } = {};
 		for (const key in o) {

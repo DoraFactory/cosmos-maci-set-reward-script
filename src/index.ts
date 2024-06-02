@@ -8,6 +8,7 @@ import {
 	signerAddress,
 	stringizing,
 	getContractClient,
+	defaultCoordPubKey,
 } from './config';
 import {
 	GasPrice,
@@ -24,6 +25,7 @@ import {
 } from '@cosmjs/cosmwasm-stargate';
 import { MsgExecuteContract } from 'cosmjs-types/cosmwasm/wasm/v1/tx';
 import { bech32 } from 'bech32';
+import { Account, PublicKey, batchGenMessage } from './lib/circom';
 
 // 创建一个PostgreSQL客户端实例
 const client = new Client({
@@ -45,7 +47,7 @@ type DelegatorData = {
 };
 
 export const delay = (ms: number) =>
-	new Promise(resolve => setTimeout(resolve, ms));
+	new Promise((resolve) => setTimeout(resolve, ms));
 
 function formatDelegationAmount(amount: string) {
 	const amountNum = parseFloat(amount) / 1000000;
@@ -109,11 +111,8 @@ async function queryDelegation(limit: number, offset: number) {
 	);
 
 	let delegators: DelegatorData[] = res.rows;
-	delegators.forEach(delegator => {
-		let dora_address = convertBech32Prefix(
-			delegator.delegator_address,
-			'dora'
-		);
+	delegators.forEach((delegator) => {
+		let dora_address = convertBech32Prefix(delegator.delegator_address, 'dora');
 		let credit_amount = formatDelegationAmount(delegator.amount);
 		let airdrop_amount = formatAirdropAmount(delegator.amount);
 
@@ -162,7 +161,7 @@ async function queryCount() {
 export async function setWhitelist(recipients: DelegatorData[]) {
 	let client = await getContractClient();
 	const gasPrice = GasPrice.fromString('100000000000peaka');
-	const users = recipients.map(recipient => {
+	const users = recipients.map((recipient) => {
 		return {
 			addr: recipient.dora_address!,
 			balance: recipient.credit_amount!.toString(),
@@ -192,7 +191,7 @@ export async function batchSend(recipients: DelegatorData[]) {
 	for (let i = 0; i < recipients.length; i += batchSize) {
 		const batchRecipients = recipients.slice(i, i + batchSize);
 
-		let msgs: MsgSendEncodeObject[] = batchRecipients.map(recipient => {
+		let msgs: MsgSendEncodeObject[] = batchRecipients.map((recipient) => {
 			return {
 				typeUrl: '/cosmos.bank.v1beta1.MsgSend',
 				value: {
@@ -210,6 +209,82 @@ export async function batchSend(recipients: DelegatorData[]) {
 		const result = await client.signAndBroadcast(signerAddress, msgs, fee);
 		console.log(`Airdrop tx: ${result.transactionHash}`);
 	}
+}
+
+/**
+ * 注册
+ */
+export async function signup(
+	client: SigningCosmWasmClient,
+	address: string,
+	maciAccount: Account
+) {
+	return client.execute(
+		address,
+		contractAddress,
+		{
+			sign_up: {
+				pubkey: {
+					x: maciAccount.pubKey[0].toString(),
+					y: maciAccount.pubKey[1].toString(),
+				},
+			},
+		},
+		'auto'
+	);
+}
+
+/**
+ * 投票
+ */
+export async function randomSubmitMsg(
+	client: SigningCosmWasmClient,
+	address: string,
+	stateIdx: number,
+	maciAccount: Account,
+	coordPubKey: PublicKey = defaultCoordPubKey
+) {
+	/**
+	 * 随机给一个项目投若干票
+	 */
+	const plan = [
+		[Math.floor(Math.random() * 10), Math.floor(Math.random() * 10)] as [
+			number,
+			number
+		],
+	];
+
+	const payload = batchGenMessage(stateIdx, maciAccount, coordPubKey, plan);
+
+	const msgs: MsgExecuteContractEncodeObject[] = payload.map(
+		({ msg, encPubkeys }) => ({
+			typeUrl: '/cosmwasm.wasm.v1.MsgExecuteContract',
+			value: MsgExecuteContract.fromPartial({
+				sender: address,
+				contract: contractAddress,
+				msg: new TextEncoder().encode(
+					JSON.stringify(
+						stringizing({
+							publish_message: {
+								enc_pub_key: {
+									x: encPubkeys[0],
+									y: encPubkeys[1],
+								},
+								message: {
+									data: msg,
+								},
+							},
+						})
+					)
+				),
+			}),
+		})
+	);
+
+	const gasPrice = GasPrice.fromString('100000000000peaka');
+	const fee = calculateFee(20000000 * msgs.length, gasPrice);
+
+	return client.signAndBroadcast(address, msgs, fee);
 }
 
 async function main() {
