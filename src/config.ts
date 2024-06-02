@@ -29,7 +29,7 @@ export const prefix = 'dora';
 
 export const signerAddress = 'dora12zkrfca99mgavvj4mraxnra3mdarpggljzp8k8';
 export const contractAddress =
-	'dora1x8gwn06l85q0lyncy7zsde8zzdn588k2dck00a8j6lkprydcutwqtlh33s';
+	'dora1657pee2jhf4jk8pq6yq64e758ngvum45gl866knmjkd83w6jgn3snsd0l3';
 
 /** Setting to speed up testing */
 const defaultSigningClientOptions: SigningStargateClientOptions = {
