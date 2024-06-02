@@ -6,7 +6,7 @@
 	"scripts": {
 		"restart": "rm -rf progress.json && ts-node src/index.ts",
 		"start": "ts-node src/index.ts",
-		"test": "ts-node src/test.ts"
+		"test": "ts-node --files src/test.ts"
 	},
 	"dependencies": {
 		"@cosmjs/amino": "^0.32.1",
