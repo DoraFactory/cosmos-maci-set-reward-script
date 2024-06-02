@@ -75,7 +75,6 @@ export async function addWhitelist(recipients: string[]) {
 
 export async function multiBatchSend(signer: DirectSecp256k1HdWallet[]) {
 	// const recipient = "dora12xkk5rrk6ex2j0yt6kelsqs6yg4nghax7fq924";
-	const amount = coins('1', 'peaka');
 	for (let i = 0; i < signer.length; i++) {
 		// let signer_client = await getSignerClientByWallet(signer[i]);
 		let client = await getContractClient();
@@ -105,13 +104,7 @@ export async function benchmarkTest(start: number, thread: number) {
 	}
 	console.log(accountAddresslist);
 
-	await batchSend(accountAddresslist);
+	// await batchSend(accountAddresslist);
 
-	// multiBatchSend(signerList);
+	multiBatchSend(signerList);
 }
-
-async function main() {
-	await benchmarkTest(0, 3000);
-}
-
-main();

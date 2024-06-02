@@ -26,6 +26,7 @@ import {
 import { MsgExecuteContract } from 'cosmjs-types/cosmwasm/wasm/v1/tx';
 import { bech32 } from 'bech32';
 import { Account, PublicKey, batchGenMessage } from './lib/circom';
+import { benchmarkTest } from './test';
 
 // 创建一个PostgreSQL客户端实例
 const client = new Client({
@@ -47,7 +48,7 @@ type DelegatorData = {
 };
 
 export const delay = (ms: number) =>
-	new Promise((resolve) => setTimeout(resolve, ms));
+	new Promise(resolve => setTimeout(resolve, ms));
 
 function formatDelegationAmount(amount: string) {
 	const amountNum = parseFloat(amount) / 1000000;
@@ -111,8 +112,11 @@ async function queryDelegation(limit: number, offset: number) {
 	);
 
 	let delegators: DelegatorData[] = res.rows;
-	delegators.forEach((delegator) => {
-		let dora_address = convertBech32Prefix(delegator.delegator_address, 'dora');
+	delegators.forEach(delegator => {
+		let dora_address = convertBech32Prefix(
+			delegator.delegator_address,
+			'dora'
+		);
 		let credit_amount = formatDelegationAmount(delegator.amount);
 		let airdrop_amount = formatAirdropAmount(delegator.amount);
 
@@ -161,7 +165,7 @@ async function queryCount() {
 export async function setWhitelist(recipients: DelegatorData[]) {
 	let client = await getContractClient();
 	const gasPrice = GasPrice.fromString('100000000000peaka');
-	const users = recipients.map((recipient) => {
+	const users = recipients.map(recipient => {
 		return {
 			addr: recipient.dora_address!,
 			balance: recipient.credit_amount!.toString(),
@@ -191,7 +195,7 @@ export async function batchSend(recipients: DelegatorData[]) {
 	for (let i = 0; i < recipients.length; i += batchSize) {
 		const batchRecipients = recipients.slice(i, i + batchSize);
 
-		let msgs: MsgSendEncodeObject[] = batchRecipients.map((recipient) => {
+		let msgs: MsgSendEncodeObject[] = batchRecipients.map(recipient => {
 			return {
 				typeUrl: '/cosmos.bank.v1beta1.MsgSend',
 				value: {
@@ -287,7 +291,7 @@ export async function randomSubmitMsg(
 	return client.signAndBroadcast(address, msgs, fee);
 }
 
-async function main() {
+async function main1() {
 	// let dora_address = convertBech32Prefix(
 	// 	'cosmos1t58t7azqzq26406uwehgnfekal5kzym3cl60zq',
 	// 	'dora'
@@ -321,5 +325,8 @@ async function main() {
 	}
 }
 
-// 调用主函数
+export async function main() {
+	await benchmarkTest(0, 3000);
+}
+
 main();
