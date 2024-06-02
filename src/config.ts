@@ -31,9 +31,14 @@ export const signerAddress = 'dora12zkrfca99mgavvj4mraxnra3mdarpggljzp8k8';
 export const contractAddress =
 	'dora1657pee2jhf4jk8pq6yq64e758ngvum45gl866knmjkd83w6jgn3snsd0l3';
 
+// export const defaultCoordPubKey = [
+// 	7421895562686352826563669933550830041677218724210020561066263498415701325176n,
+// 	15885728170420100812951141355295788125825926252169931895803773048587171524289n,
+// ] as [bigint, bigint];
+
 export const defaultCoordPubKey = [
-	7421895562686352826563669933550830041677218724210020561066263498415701325176n,
-	15885728170420100812951141355295788125825926252169931895803773048587171524289n,
+	3557592161792765812904087712812111121909518311142005886657252371904276697771n,
+	4363822302427519764561660537570341277214758164895027920046745209970137856681n,
 ] as [bigint, bigint];
 
 /** Setting to speed up testing */
@@ -126,7 +131,7 @@ export const stringizing = (
 	const newPath = [...path, o];
 
 	if (Array.isArray(o)) {
-		return o.map((item) => stringizing(item, newPath));
+		return o.map(item => stringizing(item, newPath));
 	} else if (typeof o === 'object') {
 		const output: { [key: string]: MixedData<string> } = {};
 		for (const key in o) {
