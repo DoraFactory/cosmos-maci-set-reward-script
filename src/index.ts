@@ -145,21 +145,9 @@ async function queryCount() {
 	const res = await client.query(`SELECT COUNT(*) FROM delegations`);
 	// 打印查询结果
 	console.log(res.rows[0].count);
-	delay(1000);
+	await delay(1000);
 
 	return res.rows[0].count;
-	// for
-	// } catch (err) {
-	// 	// 将 err 类型显式地转换为 Error
-	// 	if (err instanceof Error) {
-	// 		console.error('Error executing query', err.stack);
-	// 	} else {
-	// 		console.error('Unexpected error', err);
-	// 	}
-	// 	// } finally {
-	// 	// 	// 断开与数据库的连接
-	// 	// 	await client.end();
-	// }
 }
 
 export async function setWhitelist(recipients: DelegatorData[]) {
@@ -219,23 +207,32 @@ export async function batchSend(recipients: DelegatorData[]) {
  * 注册
  */
 export async function signup(
+	i: number,
 	client: SigningCosmWasmClient,
 	address: string,
 	maciAccount: Account
 ) {
-	return client.execute(
-		address,
-		contractAddress,
-		{
-			sign_up: {
-				pubkey: {
-					x: maciAccount.pubKey[0].toString(),
-					y: maciAccount.pubKey[1].toString(),
+	const gasPrice = GasPrice.fromString('100000000000peaka');
+	const fee = calculateFee(60000000, gasPrice);
+	try {
+		let res = await client.execute(
+			address,
+			contractAddress,
+			{
+				sign_up: {
+					pubkey: {
+						x: maciAccount.pubKey[0].toString(),
+						y: maciAccount.pubKey[1].toString(),
+					},
 				},
 			},
-		},
-		'auto'
-	);
+			fee
+		);
+		console.log(i, `signup hash ${res.transactionHash}`);
+		return res;
+	} catch (err: any) {
+		console.log(err);
+	}
 }
 
 /**
@@ -287,11 +284,18 @@ export async function randomSubmitMsg(
 
 	const gasPrice = GasPrice.fromString('100000000000peaka');
 	const fee = calculateFee(20000000 * msgs.length, gasPrice);
+	try {
+		const result = await client.signAndBroadcast(address, msgs, fee);
 
-	return client.signAndBroadcast(address, msgs, fee);
+		console.log(stateIdx, `pub_msg hash ${result.transactionHash}`);
+		return result;
+	} catch (err: any) {
+		console.log(err);
+		// await delay(16000);
+	}
 }
 
-async function main1() {
+async function main() {
 	// let dora_address = convertBech32Prefix(
 	// 	'cosmos1t58t7azqzq26406uwehgnfekal5kzym3cl60zq',
 	// 	'dora'
@@ -325,8 +329,8 @@ async function main1() {
 	}
 }
 
-export async function main() {
-	await benchmarkTest(0, 3000);
-}
+// export async function main() {
+// 	await benchmarkTest(0, 3000);
+// }
 
 main();

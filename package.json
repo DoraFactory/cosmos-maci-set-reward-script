@@ -4,7 +4,7 @@
 	"main": "index.js",
 	"license": "MIT",
 	"scripts": {
-		"restart": "rm -rf progress.json && ts-node src/index.ts",
+		"restart": "rm -rf progress.json && ts-node --files src/index.ts",
 		"start": "ts-node --files src/index.ts",
 		"test": "ts-node --files src/test.ts"
 	},

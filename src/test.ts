@@ -5,6 +5,7 @@ import {
 	signerAddress,
 	getContractClient,
 	contractAddress,
+	getContractClientByWallet,
 } from './config';
 import {
 	GasPrice,
@@ -16,8 +17,8 @@ import { DirectSecp256k1HdWallet, OfflineSigner } from '@cosmjs/proto-signing';
 import { HdPath, stringToPath } from '@cosmjs/crypto';
 import { coins, makeCosmoshubPath } from '@cosmjs/amino';
 import { AuthInfo, TxBody, TxRaw } from 'cosmjs-types/cosmos/tx/v1beta1/tx';
-import { randomSubmitMsg, setWhitelist, signup } from '.';
-import { genKeypair } from './lib/circom';
+import { delay, randomSubmitMsg, setWhitelist, signup } from '.';
+import { genKeypair, Account } from './lib/circom';
 
 export async function batchSend(recipients: string[]) {
 	const batchSize = 1500;
@@ -77,17 +78,27 @@ export async function multiBatchSend(signer: DirectSecp256k1HdWallet[]) {
 	// const recipient = "dora12xkk5rrk6ex2j0yt6kelsqs6yg4nghax7fq924";
 	for (let i = 0; i < signer.length; i++) {
 		// let signer_client = await getSignerClientByWallet(signer[i]);
-		let client = await getContractClient();
+		let client = await getContractClientByWallet(signer[i]);
 
 		let [{ address }] = await signer[i].getAccounts();
 
-		let maciAccount = genKeypair();
+		// let maciAccount = genKeypair();
+		let maciAccount: Account = {
+			privKey:
+				20998112427667807795414983364053796027037753339446011285430200813389155550260n,
+			pubKey: [
+				18162874740989776649659415206015074611002004817349811277327337518639243679492n,
+				15243585339587983598168692459942850229544616568356930224643892620924755850757n,
+			],
+			formatedPrivKey:
+				6579145933965452350468879105197507094030383123583244552573447491276099023871n,
+		};
+		// console.log(maciAccount);
+		signup(i, client, address, maciAccount);
 
-		let signup_hash = await signup(client, address, maciAccount);
-		console.log(i, `signup hash ${signup_hash.transactionHash}`);
-
-		let pub_msg = await randomSubmitMsg(client, address, i, maciAccount);
-		console.log(i, `pub_msg hash ${pub_msg.transactionHash}`);
+		// randomSubmitMsg(client, address, i, maciAccount);
+		// let pub_msg = randomSubmitMsg(client, address, i, maciAccount);
+		// console.log(i, `pub_msg hash ${pub_msg?.transactionHash}`);
 	}
 }
 
@@ -95,7 +106,7 @@ export async function benchmarkTest(start: number, thread: number) {
 	// let thread = 10000;
 	let accountAddresslist: string[] = [];
 	let signerList: DirectSecp256k1HdWallet[] = [];
-	(start = 0), (thread = 3000);
+	(start = 70), (thread = 3000);
 	for (let i = start; i <= thread; i++) {
 		let signer = await generateAccount(i);
 		let accountDetail = await signer.getAccounts();

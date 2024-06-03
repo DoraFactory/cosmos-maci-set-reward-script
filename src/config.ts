@@ -88,6 +88,19 @@ export async function getContractClient() {
 	return client;
 }
 
+export async function getContractClientByWallet(
+	wallet: DirectSecp256k1HdWallet
+) {
+	const client = await SigningCosmWasmClient.connectWithSigner(
+		rpcEndpoint,
+		wallet,
+		{
+			...defaultSigningClientOptions,
+		}
+	);
+	return client;
+}
+
 export async function getSignerClientByWallet(wallet: DirectSecp256k1HdWallet) {
 	const signingStargateClient = await SigningStargateClient.connectWithSigner(
 		rpcEndpoint,
