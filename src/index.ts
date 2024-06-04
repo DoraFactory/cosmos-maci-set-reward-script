@@ -130,10 +130,14 @@ async function queryDelegation(limit: number, offset: number) {
 	console.log(offset, delegators.length, date.toLocaleString());
 	//
 	// 设置白名单的交易脚本需要放在这里。
-	// await batchSend(delegators);
-	await setWhitelist(delegators);
-	//
-	// console.log(delegators);
+	await batchSend(delegators);
+
+	// 开始投票前
+	// await setWhitelist(delegators);
+
+	// 开始投票后
+	// await grant(delegators);
+
 	saveProgress(offset + limit, limit);
 
 	await delay(1000);
@@ -174,6 +178,30 @@ export async function setWhitelist(recipients: DelegatorData[]) {
 	console.log(`set_whitelists tx: ${result.transactionHash}`);
 }
 
+export async function grant(recipients: DelegatorData[]) {
+	let client = await getContractClient();
+	const users = recipients.map(recipient => {
+		return {
+			addr: recipient.dora_address!,
+			balance: '50',
+		};
+	});
+	let result = await client.execute(
+		signerAddress,
+		contractAddress,
+		{
+			grant: {
+				base_amount: '50000000000000000000',
+				whitelists: {
+					users,
+				},
+			},
+		},
+		'auto'
+	);
+	console.log(`fee_grant tx: ${result.transactionHash}`);
+}
+
 export async function batchSend(recipients: DelegatorData[]) {
 	const batchSize = 1500;
 	let client = await getSignerClient();
@@ -203,99 +231,7 @@ export async function batchSend(recipients: DelegatorData[]) {
 	}
 }
 
-/**
- * 注册
- */
-export async function signup(
-	i: number,
-	client: SigningCosmWasmClient,
-	address: string,
-	maciAccount: Account
-) {
-	const gasPrice = GasPrice.fromString('100000000000peaka');
-	const fee = calculateFee(60000000, gasPrice);
-	try {
-		let res = await client.execute(
-			address,
-			contractAddress,
-			{
-				sign_up: {
-					pubkey: {
-						x: maciAccount.pubKey[0].toString(),
-						y: maciAccount.pubKey[1].toString(),
-					},
-				},
-			},
-			fee
-		);
-		console.log(i, `signup hash ${res.transactionHash}`);
-		return res;
-	} catch (err: any) {
-		console.log(err);
-	}
-}
-
-/**
- * 投票
- */
-export async function randomSubmitMsg(
-	client: SigningCosmWasmClient,
-	address: string,
-	stateIdx: number,
-	maciAccount: Account,
-	coordPubKey: PublicKey = defaultCoordPubKey
-) {
-	/**
-	 * 随机给一个项目投若干票
-	 */
-	const plan = [
-		[Math.floor(Math.random() * 10), Math.floor(Math.random() * 10)] as [
-			number,
-			number
-		],
-	];
-
-	const payload = batchGenMessage(stateIdx, maciAccount, coordPubKey, plan);
-
-	const msgs: MsgExecuteContractEncodeObject[] = payload.map(
-		({ msg, encPubkeys }) => ({
-			typeUrl: '/cosmwasm.wasm.v1.MsgExecuteContract',
-			value: MsgExecuteContract.fromPartial({
-				sender: address,
-				contract: contractAddress,
-				msg: new TextEncoder().encode(
-					JSON.stringify(
-						stringizing({
-							publish_message: {
-								enc_pub_key: {
-									x: encPubkeys[0],
-									y: encPubkeys[1],
-								},
-								message: {
-									data: msg,
-								},
-							},
-						})
-					)
-				),
-			}),
-		})
-	);
-
-	const gasPrice = GasPrice.fromString('100000000000peaka');
-	const fee = calculateFee(20000000 * msgs.length, gasPrice);
-	try {
-		const result = await client.signAndBroadcast(address, msgs, fee);
-
-		console.log(stateIdx, `pub_msg hash ${result.transactionHash}`);
-		return result;
-	} catch (err: any) {
-		console.log(err);
-		// await delay(16000);
-	}
-}
-
-async function main() {
+async function mai1n() {
 	// let dora_address = convertBech32Prefix(
 	// 	'cosmos1t58t7azqzq26406uwehgnfekal5kzym3cl60zq',
 	// 	'dora'
@@ -329,8 +265,8 @@ async function main() {
 	}
 }
 
-// export async function main() {
-// 	await benchmarkTest(0, 3000);
-// }
+export async function main() {
+	await benchmarkTest(1, 30);
+}
 
 main();
