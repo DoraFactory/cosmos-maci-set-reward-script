@@ -66,12 +66,8 @@ function formatAirdropAmount(amount: string) {
 		throw new Error('Invalid number format');
 	}
 
-	if (amountNum < 0.5) {
-		return 0.03;
-	} else if (amountNum < 5) {
-		return 0.2;
-	} else if (amountNum < 10) {
-		return 0.5;
+	if (amountNum < 1) {
+		return 0.15;
 	} else {
 		return 1;
 	}
@@ -231,7 +227,7 @@ export async function batchSend(recipients: DelegatorData[]) {
 	}
 }
 
-async function mai1n() {
+async function main() {
 	// let dora_address = convertBech32Prefix(
 	// 	'cosmos1t58t7azqzq26406uwehgnfekal5kzym3cl60zq',
 	// 	'dora'
@@ -265,7 +261,7 @@ async function mai1n() {
 	}
 }
 
-export async function main() {
+export async function main1() {
 	await benchmarkTest(1, 30);
 }
 
